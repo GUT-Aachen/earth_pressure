@@ -27,6 +27,58 @@ h1 {
 }
 
 
+/* Dropdown container styling */
+.dropdown .Select-control {
+    border: 250% solid #00549f; /* Consistent with button hover color */
+    border-radius: 5px;
+    background-color: #ffffff; /* Matches the body background */
+    font-size: 0.9vw;
+    color: #333; /* Neutral text color */
+    padding: 0.5%;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Dropdown hover and focus effects */
+.dropdown .Select-control:hover,
+.dropdown .Select-control:focus {
+    border-color: #1777d1; /* Slightly brighter blue */
+    box-shadow: 0 0 5px rgba(23, 119, 209, 0.5); /* Subtle glow */
+}
+
+/* Dropdown menu styling */
+.dropdown .Select-menu-outer {
+    border: 1px solid #00549f;
+    border-radius: 5px;
+    background-color: #f9f9f9; /* Light neutral background */
+    z-index: 1000;
+}
+
+/* Dropdown menu item styling */
+.dropdown .Select-option {
+    padding: 0.8vw;
+    font-size: 0.9vw;
+    color: #333;
+    cursor: pointer;
+}
+
+.dropdown .Select-option:hover {
+    background-color: #00549f;
+    color: #fff;
+}
+
+/* Selected option styling */
+.dropdown .Select-value {
+    color: #00549f;
+    font-weight: bold;
+}
+
+/* Disabled dropdown styling */
+.dropdown .Select-control.is-disabled {
+    background-color: #e9ecef; /* Subtle gray */
+    color: #6c757d; /* Muted text */
+    border-color: #ced4da;
+}
+
 .slider {
     margin-top: 1%;
     margin-bottom: 2%;
@@ -43,11 +95,11 @@ h1 {
 
 /* Style the slider tooltip (indicator) */
 .rc-slider-tooltip-inner {
-    font-size: 0.9vw; /* Adjust the font size */
+    font-size: 0.8vw; /* Adjust the font size */
     font-family: 'Arial', sans-serif; /* Set the font family */
     color: #ffffff; /* Set the text color */
-    background-color: #00549f; /* Change the tooltip background color */
-    border-radius: 40%; /* Add rounded corners */
+    background-color: #00559f9d; /* Change the tooltip background color */
+    border-radius: 30%; /* Add rounded corners */
 }
 
 .layer-properties {
