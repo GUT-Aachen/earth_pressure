@@ -33,11 +33,11 @@ app.layout = html.Div([
                                 html.Span('Ratio of horizantal to wall height of the wall', className='tooltiptext')
                             ])], className='slider-label'),
                 dcc.Slider(
-                    id='u/h', min=-0.1, max=0.1, step=0.0001, value=0,
+                    id='u/h', min=-0.005, max=0.02, step=0.0001, value=0,
                         marks={
-                                0.1: "Passive",
+                                0.02: "Passive",
                                 0: "At-Rest",
-                                -0.1: "Active"
+                                -0.005: "Active"
                                 },
                     className='slider', tooltip={'placement': 'bottom', 'always_visible': True}
                 ),
@@ -50,8 +50,8 @@ app.layout = html.Div([
                                 html.Span('Height of the wall', className='tooltiptext')
                             ])], className='slider-label'),
                 dcc.Slider(
-                    id='h', min=0, max=20, step=0.25, value=2,
-                    marks={i: f'{i}' for i in range(0, 21, 5)},
+                    id='h', min=0, max=30, step=2, value=10,
+                    marks={i: f'{i}' for i in range(0, 31, 10)},
                     className='slider', tooltip={'placement': 'bottom', 'always_visible': True}
                 ),
 
@@ -181,6 +181,8 @@ def update_gamma_prime(gamma_r1, h):
      Output('pressure-graph', 'figure')],
     [Input('update-button', 'n_clicks')],   
     [State('u/h', 'value'),
+     State('u/h', 'max'),
+     State('u/h', 'min'),
      State('h', 'value'),
      State('gamma_1', 'value'),
      State('gamma_r_1', 'value'),
@@ -189,7 +191,7 @@ def update_gamma_prime(gamma_r1, h):
      State('friction_angle', 'value')]
 )
 
-def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_angle):
+def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_table, c, friction_angle):
     # Constants
     gamma_water = 10 # kN/m³ for water
     u= u_r*h
@@ -213,9 +215,10 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
     for layer in layers:
         if layer['thickness'] > 0:
             soil_layers_fig.add_trace(go.Scatter(
-                x=[0.01*h+u, 0.01*h, 0.5*h, 0.5*h],  # Create a rectangle-like shape
+                x=[0.1*(u_r_min+u_r_max)*h+u, 0.1*(u_r_min+u_r_max)*h, 2*(u_r_max)*h, 2*(u_r_max)*h],  # Create a rectangle-like shape
                 y=[layer['top'], layer['bottom'], layer['bottom'], layer['top']],
                 fill='toself',
+                opacity=0.5,
                 fillcolor=layer['color'],  # Transparent background to see the pattern
                 line=dict(width=1, color='black'),
                 name=layer['name'],
@@ -225,16 +228,16 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
                 fillpattern=layer['fillpattern']  # Use the specified fill pattern
             ))
             # Add the annotation for the layer name
-            mid_depth = (layer['top'] + layer['bottom']) / 2  # Midpoint of the layer
-            soil_layers_fig.add_annotation(
-                x=0.25*h,  # Position the text slightly to the right of the layer box
-                y=mid_depth,
-                text=layer['name'],  # Layer name as text
-                font = dict(size=14, color="white", weight='bold'),
-                showarrow=False,  # Don't show an arrow
-                xanchor='left',  # Anchor text to the left
-                yanchor='middle'  # Center text vertically with the midpoint             
-            )
+            # mid_depth = (layer['top'] + layer['bottom']) / 2  # Midpoint of the layer
+            # soil_layers_fig.add_annotation(
+            #     x=0.25*u_r_max*h,  # Position the text slightly to the right of the layer box
+            #     y=mid_depth,
+            #     text=layer['name'],  # Layer name as text
+            #     font = dict(size=14, color="white", weight='bold'),
+            #     showarrow=False,  # Don't show an arrow
+            #     xanchor='left',  # Anchor text to the left
+            #     yanchor='middle'  # Center text vertically with the midpoint             
+            # )
 
     # add the ground surface
 
@@ -248,7 +251,7 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
     ))
     # add at rest earth pressure with dash line
     soil_layers_fig.add_trace(go.Scatter(
-        x=[-0.01*h, -0.01*h, 0.01*h, 0.01*h],  # Create a rectangle-like shape
+        x=[-0.1*(u_r_min+u_r_max)*h, -0.1*(u_r_min+u_r_max)*h, 0.1*(u_r_min+u_r_max)*h, 0.1*(u_r_min+u_r_max)*h],  # Create a rectangle-like shape
         y=[0, h, h, 0],
         fill='none',
         line=dict(width=1, color='black', dash='dash'),
@@ -260,15 +263,15 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
 
     # add the earth retaining wall
     soil_layers_fig.add_trace(go.Scatter(
-        x=[-0.01*h+u, -0.01*h, 0.01*h, 0.01*h+u],  # Create a rectangle-like shape
+        x=[-0.1*(u_r_min+u_r_max)*h+u, -0.1*(u_r_min+u_r_max)*h, 0.1*(u_r_min+u_r_max)*h, 0.1*(u_r_min+u_r_max)*h+u],  # Create a rectangle-like shape
         y=[0, h, h, 0],
         fill='toself',
-        fillcolor='black',  # Transparent background to see the pattern
+        fillcolor='white',  # Transparent background to see the pattern
         line=dict(width=1, color='black'),
         name='Retaining Wall',
         showlegend=False,
         hoverinfo='skip',  # Skip the hover info for these layers
-        fillpattern={'shape': '/'},
+        fillpattern={'shape': '/'},  # Use the specified fill pattern
         mode='lines'  # Show only the lines, no markers (dots)
     ))
 
@@ -284,7 +287,7 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
 
     # add a line to show the movement of the wall
     soil_layers_fig.add_trace(go.Scatter(
-        x=[0, (h-y_top)*u_r],  # Start at -1 and end at 1
+        x=[0, (h-y_top)*u_r],  
         y=[h, y_top],  # Horizontal line at the top of the layer
         mode='lines',
         line=dict(color='red', width=1, dash='dash'),
@@ -295,7 +298,7 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
 
     # add arrow  from to show the direction of passive 
     soil_layers_fig.add_annotation(
-        x=0.1*h,  
+        x=0.8*u_r_max*h,  
         y=0.5*y_top,
         ax=0,  # x-coordinate of arrow head
         ay=0.5*y_top,  # y-coordinate of arrow head
@@ -311,9 +314,9 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
     )
     # add annotation for the passive
     soil_layers_fig.add_annotation(
-        x=0.05*h,  # Position the text slightly to the right of the layer box
+        x=0.5*u_r_max*h,  # Position the text slightly to the right of the layer box
         y=0.8*y_top,
-        text='Passive',  # Layer name as text
+        text='Passive (compression)',  # Layer name as text
         font = dict(size=14, color="green", weight='bold'),
         showarrow=False,  # Don't show an arrow
         xanchor='center',  # Anchor text to the left
@@ -322,7 +325,7 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
 
     # add arrow  from to show the direction of  active
     soil_layers_fig.add_annotation(
-        x=-0.1*h,  
+        x=3*u_r_min*h,  
         y=0.5*y_top,
         ax=0,  # x-coordinate of arrow head
         ay=0.5*y_top,  # y-coordinate of arrow head
@@ -338,9 +341,9 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
     )
     # add annotation for the passive
     soil_layers_fig.add_annotation(
-        x=-0.05*h,  # Position the text slightly to the right of the layer box
+        x=2*u_r_min*h,  # Position the text slightly to the right of the layer box
         y=0.8*y_top,
-        text='Active',  # Layer name as text
+        text='Active (extension)',  # Layer name as text
         font = dict(size=14, color="blue", weight='bold'),
         showarrow=False,  # Don't show an arrow
         xanchor='center',  # Anchor text to the left
@@ -357,37 +360,7 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
         hoverinfo='skip'  # Skip the hover info for these line
     )) 
 
-    # # adding arrowas distributed load on the foundation
-    # num_arrows = 10
-    # for i in range(0, int(num_arrows+1)):
-    #     soil_layers_fig.add_annotation(
-    #         x=i*0.1*(0.1*h), # x-coordinate of arrow head
-    #         y=0, # y-coordinate of arrow head
-    #         ax=i*0.1*(0.1*h), # x-coordinate of tail
-    #         ay=0.9*y_top, # y-coordinate of tail
-    #         xref="x",
-    #         yref="y",
-    #         axref="x",
-    #         ayref="y",
-    #         showarrow=True,
-    #         arrowhead=2,
-    #         arrowsize=1,
-    #         arrowwidth=2,
-    #         arrowcolor="black"
-    #     )
 
-
-
-    # #  adding text for the load delta sigma
-    # soil_layers_fig.add_annotation(
-    #     x=0.05*h,  # Position the text slightly to the right of the layer box
-    #     y=y_top,
-    #     text='Δσ',  # Layer name as text
-    #     font = dict(size=14, color="black", weight='bold'),
-    #     showarrow=False,  # Don't show an arrow
-    #     xanchor='center',  # Anchor text to the left
-    #     yanchor='middle'  # Center text vertically with the midpoint
-    # )
     # add a line for the water table
     soil_layers_fig.add_trace(go.Scatter(
         x=[0, 1],  # Start at -1 and end at 1
@@ -398,13 +371,54 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
         hoverinfo='skip'  # Skip the hover info for these line
     ))
 
+    # u vs k 
+    u_data = np.linspace(2*u_r_min*h, 2*u_r_max*h, 100)
+    k_0 = 1 - np.sin(np.radians(friction_angle))
+    k_a_ult = (1 - np.sin(np.radians(friction_angle)))/(1 + np.sin(np.radians(friction_angle)))
+    k_p_ult = 1/k_a_ult
+    sigma_n =0
+
+    k_a_data = k_0 - (k_0 - k_a_ult) * (1 - np.exp(-100 * -u_data[u_data < 0]))
+    k_p_data = k_0 + (k_p_ult - k_0) * (1 - np.exp(-30 * (u_data[u_data > 0])))
+    k = np.zeros_like(u_data)
+    k[u_data < 0] = k_a_data
+    k[u_data > 0] = k_p_data
+    k[u_data == 0] = k_0
+
+    k_a = k_0 - (k_0 - k_a_ult) * (1 - np.exp(-100 * -u))
+    k_p = k_0 + (k_p_ult - k_0) * (1 - np.exp(-30 * u))
+
+
+    # create a trcae for the k vs u in yaxis 2
+    soil_layers_fig.add_trace(go.Scatter(
+        x=u_data,
+        y=k,
+        yaxis='y2',
+        mode='lines',
+        line=dict(color='red', width=3),
+        name='K',
+        showlegend=False
+    ))
+
+    # add a scatter point for k_a and k_p
+    soil_layers_fig.add_trace(go.Scatter(
+        x=[u],
+        y=[k_a if u < 0 else k_p],
+        yaxis='y2',
+        mode='markers',
+        marker=dict(color='blue' if u<0 else 'green', size=10),
+        name='current K',
+        showlegend=False
+    ))
+
+
    
     # First figure (soil_layers_fig)
     soil_layers_fig.update_layout(
         plot_bgcolor='white',
         xaxis_title= dict(text='u (m)', font=dict(weight='bold')),
         xaxis=dict(
-            range=[-0.2*h, 0.5*h],  # Adjusting the x-range as needed
+            range=[4*u_r_min*h, 2*u_r_max*h],  # Adjusting the x-range as needed
             showticklabels=True,
             ticks='outside',
             title_standoff=4,
@@ -432,15 +446,27 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
             # scaleratio=1,
             side='right'
         ),
+        # add another y-axis for k
+        yaxis2=dict(
+            title=dict(text='K', font=dict(weight='bold')),
+            overlaying='y',
+            side='left',
+            range=[0, 1.1*k_p_ult],
+            ticks='outside',
+            title_standoff=4,
+            ticklen=5,
+            minor_ticks="inside",
+            showline=True,
+            linewidth=2,
+            linecolor='black',
+            zeroline=False,
+
+        ),
+        
         margin=dict(l=20, r=10),
     )
 
-    # Mohr circle figure
-    k_0 = 1 - np.sin(np.radians(friction_angle))
-    print(k_0)
-    k_a = (1 - np.sin(np.radians(friction_angle)))/(1 + np.sin(np.radians(friction_angle)))
-    k_p = 1/k_a
-    sigma_n =0
+
 
 
 
@@ -472,7 +498,7 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
 
     if u_r < 0:
         # active effectives stresses
-        sigma_h_a = sigma_v_0*k_a * np.exp(u_r)
+        sigma_h_a = sigma_v_0*k_a - 2*c*np.sqrt(k_a)
         R_a = (sigma_v_0 - sigma_h_a)/2
         center_a = (sigma_v_0 + sigma_h_a)/2
         # Generate points for the active Mohr circle
@@ -490,7 +516,7 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
         ))
     elif u_r > 0:
         # passive effectives stresses
-        sigma_h_p = sigma_v_0*k_p * np.exp(u_r)
+        sigma_h_p = sigma_v_0*k_p + 2*c*np.sqrt(k_p)
         R_p = (sigma_v_0 - sigma_h_p)/2
         ceneter_p = (sigma_v_0 + sigma_h_p)/2
         # Generate points for the passive Mohr circle
@@ -519,6 +545,8 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
         name='Critical State Line',
         showlegend=True
     ))
+
+    # plot 
 
 
 
@@ -556,6 +584,15 @@ def update_graphs(n_clicks,u_r, h,gamma_1, gamma_r_1, water_table, c, friction_a
     # # ))
 
     Mohr_circle_fig.update_layout(
+        # adding title to the plot at the center top
+        title=dict(text='Mohr Circle for Effective Stresses at depth = h/2', 
+                   x=0.5, 
+                   xanchor='center', 
+                   yanchor='top',
+                    
+                   font=dict(size=20, color='red', weight='bold', family='Arial', style='italic')
+                   ),
+   
         xaxis_title=dict(text='σ (kPa)', font=dict(weight='bold')),
         plot_bgcolor='white',
         xaxis=dict(
