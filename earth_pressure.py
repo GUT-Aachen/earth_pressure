@@ -33,11 +33,11 @@ app.layout = html.Div([
                                 html.Span('Ratio of horizantal to wall height of the wall', className='tooltiptext')
                             ])], className='slider-label'),
                 dcc.Slider(
-                    id='u/h', min=-0.005, max=0.02, step=0.0001, value=0,
+                    id='u/h', min=-0.002, max=0.01, step=0.0001, value=0,
                         marks={
-                                0.02: "Passive",
+                                0.01: "Passive",
                                 0: "At-Rest",
-                                -0.005: "Active"
+                                -0.002: "Active"
                                 },
                     className='slider', tooltip={'placement': 'bottom', 'always_visible': True}
                 ),
@@ -55,7 +55,6 @@ app.layout = html.Div([
                     className='slider', tooltip={'placement': 'bottom', 'always_visible': True}
                 ),
 
-                # Clay Slider
                 html.Label(children=[
                     'ϕ′ (deg)', 
                             html.Div(className='tooltip', children=[
@@ -67,13 +66,11 @@ app.layout = html.Div([
                     marks={i: f'{i}' for i in range(0, 51, 10)},
                     className='slider', tooltip={'placement': 'bottom', 'always_visible': True}
                 ),
-
-                # Sand-2 Slider
                 html.Label(children=[
                     'c′ (kPa)', 
                             html.Div(className='tooltip', children=[
                                 html.Img(src='/assets/info-icon.png', className='info-icon', alt='Info'), 
-                                html.Span('Thickness of Sand-2.', className='tooltiptext')
+                                html.Span('Effective Cohesion (kPa).', className='tooltiptext')
                             ])], className='slider-label'),
                 dcc.Slider(
                     id='c', min=0, max=100, step=2, value=0,
@@ -215,7 +212,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
     for layer in layers:
         if layer['thickness'] > 0:
             soil_layers_fig.add_trace(go.Scatter(
-                x=[0.1*(u_r_min+u_r_max)*h+u, 0.1*(u_r_min+u_r_max)*h, 2*(u_r_max)*h, 2*(u_r_max)*h],  # Create a rectangle-like shape
+                x=[0.1*(u_r_min+u_r_max)+u_r, 0.1*(u_r_min+u_r_max), 2*(u_r_max), 2*(u_r_max)],  # Create a rectangle-like shape
                 y=[layer['top'], layer['bottom'], layer['bottom'], layer['top']],
                 fill='toself',
                 opacity=0.5,
@@ -242,7 +239,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
     # add the ground surface
 
     soil_layers_fig.add_trace(go.Scatter(
-        x=[0, 1],  
+        x=[0, 2*u_r_max],  
         y=[0, 0],  # Horizontal line at the top of the layer
         mode='lines',
         line=dict(color='black', width=4, dash='solid'),
@@ -251,7 +248,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
     ))
     # add at rest earth pressure with dash line
     soil_layers_fig.add_trace(go.Scatter(
-        x=[-0.1*(u_r_min+u_r_max)*h, -0.1*(u_r_min+u_r_max)*h, 0.1*(u_r_min+u_r_max)*h, 0.1*(u_r_min+u_r_max)*h],  # Create a rectangle-like shape
+        x=[-0.1*(u_r_min+u_r_max), -0.1*(u_r_min+u_r_max), 0.1*(u_r_min+u_r_max), 0.1*(u_r_min+u_r_max)],  # Create a rectangle-like shape
         y=[0, h, h, 0],
         fill='none',
         line=dict(width=1, color='black', dash='dash'),
@@ -263,7 +260,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
 
     # add the earth retaining wall
     soil_layers_fig.add_trace(go.Scatter(
-        x=[-0.1*(u_r_min+u_r_max)*h+u, -0.1*(u_r_min+u_r_max)*h, 0.1*(u_r_min+u_r_max)*h, 0.1*(u_r_min+u_r_max)*h+u],  # Create a rectangle-like shape
+        x=[-0.1*(u_r_min+u_r_max)+u_r, -0.1*(u_r_min+u_r_max), 0.1*(u_r_min+u_r_max), 0.1*(u_r_min+u_r_max)+u_r],  # Create a rectangle-like shape
         y=[0, h, h, 0],
         fill='toself',
         fillcolor='white',  # Transparent background to see the pattern
@@ -287,7 +284,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
 
     # add a line to show the movement of the wall
     soil_layers_fig.add_trace(go.Scatter(
-        x=[0, (h-y_top)*u_r],  
+        x=[0, ((h-y_top)/h)*u_r],  
         y=[h, y_top],  # Horizontal line at the top of the layer
         mode='lines',
         line=dict(color='red', width=1, dash='dash'),
@@ -298,7 +295,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
 
     # add arrow  from to show the direction of passive 
     soil_layers_fig.add_annotation(
-        x=0.8*u_r_max*h,  
+        x=0.8*u_r_max,  
         y=0.5*y_top,
         ax=0,  # x-coordinate of arrow head
         ay=0.5*y_top,  # y-coordinate of arrow head
@@ -314,7 +311,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
     )
     # add annotation for the passive
     soil_layers_fig.add_annotation(
-        x=0.5*u_r_max*h,  # Position the text slightly to the right of the layer box
+        x=0.5*u_r_max,  # Position the text slightly to the right of the layer box
         y=0.8*y_top,
         text='Passive (compression)',  # Layer name as text
         font = dict(size=14, color="green", weight='bold'),
@@ -325,7 +322,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
 
     # add arrow  from to show the direction of  active
     soil_layers_fig.add_annotation(
-        x=3*u_r_min*h,  
+        x=3*u_r_min,  
         y=0.5*y_top,
         ax=0,  # x-coordinate of arrow head
         ay=0.5*y_top,  # y-coordinate of arrow head
@@ -341,7 +338,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
     )
     # add annotation for the passive
     soil_layers_fig.add_annotation(
-        x=2*u_r_min*h,  # Position the text slightly to the right of the layer box
+        x=2*u_r_min,  # Position the text slightly to the right of the layer box
         y=0.8*y_top,
         text='Active (extension)',  # Layer name as text
         font = dict(size=14, color="blue", weight='bold'),
@@ -352,7 +349,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
 
     # Add a line at the water table
     soil_layers_fig.add_trace(go.Scatter(
-        x=[0, 1],  # Start at -1 and end at 1
+        x=[0, 2*u_r_max],  # Start at -1 and end at 1
         y=[0, 0],  # Horizontal line at the top of the layer
         mode='lines',
         line=dict(color='blue', width=2, dash='dot'),
@@ -363,7 +360,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
 
     # add a line for the water table
     soil_layers_fig.add_trace(go.Scatter(
-        x=[0, 1],  # Start at -1 and end at 1
+        x=[0, 2*u_r_max],  # Start at -1 and end at 1
         y=[water_table, water_table],  # Horizontal line at the top of the layer
         mode='lines',
         line=dict(color='blue', width=2, dash='dot'),
@@ -372,21 +369,21 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
     ))
 
     # u vs k 
-    u_data = np.linspace(2*u_r_min*h, 2*u_r_max*h, 100)
+    u_data = np.linspace(2*u_r_min, 2*u_r_max, 100)
     k_0 = 1 - np.sin(np.radians(friction_angle))
     k_a_ult = (1 - np.sin(np.radians(friction_angle)))/(1 + np.sin(np.radians(friction_angle)))
     k_p_ult = 1/k_a_ult
     sigma_n =0
 
-    k_a_data = k_0 - (k_0 - k_a_ult) * (1 - np.exp(-100 * -u_data[u_data < 0]))
-    k_p_data = k_0 + (k_p_ult - k_0) * (1 - np.exp(-30 * (u_data[u_data > 0])))
+    k_a_data = k_0 - (k_0 - k_a_ult) * (1 - np.exp(-1800 * -u_data[u_data < 0]))
+    k_p_data = k_0 + (k_p_ult - k_0) * (1 - np.exp(-600* (u_data[u_data > 0])))
     k = np.zeros_like(u_data)
     k[u_data < 0] = k_a_data
     k[u_data > 0] = k_p_data
     k[u_data == 0] = k_0
 
-    k_a = k_0 - (k_0 - k_a_ult) * (1 - np.exp(-100 * -u))
-    k_p = k_0 + (k_p_ult - k_0) * (1 - np.exp(-30 * u))
+    k_a = k_0 - (k_0 - k_a_ult) * (1 - np.exp(-1800 * -u_r))
+    k_p = k_0 + (k_p_ult - k_0) * (1 - np.exp(-600 * u_r))
 
 
     # create a trcae for the k vs u in yaxis 2
@@ -402,12 +399,12 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
 
     # add a scatter point for k_a and k_p
     soil_layers_fig.add_trace(go.Scatter(
-        x=[u],
-        y=[k_a if u < 0 else k_p],
+        x=[u_r],
+        y=[k_a if u_r < 0 else k_p],
         yaxis='y2',
         mode='markers',
-        marker=dict(color='blue' if u<0 else 'green', size=10),
-        name='current K',
+        marker=dict(color='blue' if u_r<0 else 'black' if u_r == 0 else 'green', size=10),
+        name='Active_K' if u_r < 0 else 'K_0(At-rest)' if u_r == 0 else 'Passive_K',
         showlegend=False
     ))
 
@@ -416,9 +413,9 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
     # First figure (soil_layers_fig)
     soil_layers_fig.update_layout(
         plot_bgcolor='white',
-        xaxis_title= dict(text='u (m)', font=dict(weight='bold')),
+        xaxis_title= dict(text='u/h', font=dict(weight='bold')),
         xaxis=dict(
-            range=[4*u_r_min*h, 2*u_r_max*h],  # Adjusting the x-range as needed
+            range=[4*u_r_min, 2*u_r_max],  # Adjusting the x-range as needed
             showticklabels=True,
             ticks='outside',
             title_standoff=4,
