@@ -522,7 +522,7 @@ def update_graphs(n_clicks,u_r, u_r_max, u_r_min, h,gamma_1, gamma_r_1, water_ta
         mode='lines',
         line=dict(color='black', width=2),
         name='Critical State Line',
-        showlegend=True
+        showlegend=False
     ))
 
 
